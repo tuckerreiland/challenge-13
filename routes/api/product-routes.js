@@ -4,19 +4,36 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 // The `/api/products` endpoint
 
 // get all products
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
+  await Product.findAll({
+    include:[Category,Tag]
+  }).then(data=>{
+    res.json(data)
+  }).catch(err=>{
+    res.status(500).json({msg:"oh noes! error!",err})
+  })
 });
 
 // get one product
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  await Product.findOne({
+    where:{
+      id:req.params.id
+    },
+    include:[Category,Tag]
+  }).then(data=>{
+    res.json(data)
+  }).catch(err=>{
+    res.status(500).json({msg:"error",err})
+  })
 });
 
 // create new product
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   /* req.body should look like this...
     {
       product_name: "Basketball",
@@ -25,6 +42,21 @@ router.post('/', (req, res) => {
       tagIds: [1, 2, 3, 4]
     }
   */
+    try{
+      const newProduct = await Product.create({
+          product_name:req.body.product_name,
+          price:req.body.price,
+          stock:req.body.stoc,
+          tagIds:req.body.tagIds
+      })
+      res.status(201).json(newProduct)
+  }catch(err){
+      console.log(err)
+      res.status(500).json({
+          msg:"error",
+          err
+      })
+  }
   Product.create(req.body)
     .then((product) => {
       // if there's product tags, we need to create pairings to bulk create in the ProductTag model
@@ -91,6 +123,21 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
+  Product.destroy({
+    where:{
+        id:req.params.id
+    }
+    }).then(product=>{
+        if(!product){
+            return res.status(404).json({msg:"no such product!"})
+        }
+    res.json(product)
+}).catch(err=>{
+    res.status(500).json({
+        msg:"internal server error",
+        err
+    })
+})
 });
 
 module.exports = router;
