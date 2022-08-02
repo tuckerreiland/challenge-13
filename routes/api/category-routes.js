@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
   // create a new category
   try{
     const newCategroy = await Category.create({
-        categroy_name:req.body.category_name,
+        category_name:req.body.category_name,
     })
     res.status(201).json(newCategroy)
   }catch(err){
@@ -49,11 +49,23 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', (req, res) => {
   // update a category by its `id` value
-  Category.update(req.body, {
+  Category.update({
+    category_name:req.body.category_name,
+  },{
     where: {
-      id: req.params.id,
+      id:req.params.id,
     },
-  })
+  }).then(category=>{
+    if(!category[0]){
+        return res.status(404).json({msg:"no such category or no change made!"})
+    }
+res.json(category)
+}).catch(err=>{
+res.status(500).json({
+    msg:"internal server error",
+    err
+})
+})
 });
 
 router.delete('/:id', (req, res) => {
@@ -62,17 +74,7 @@ router.delete('/:id', (req, res) => {
     where:{
         id:req.params.id
     }
-    }).then(catgeory=>{
-        if(!category){
-            return res.status(404).json({msg:"no such category!"})
-        }
-    res.json(category)
-}).catch(err=>{
-    res.status(500).json({
-        msg:"internal server error",
-        err
     })
-})
 });
 
 module.exports = router;
